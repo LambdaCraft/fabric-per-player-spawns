@@ -2,11 +2,13 @@ package dev.lambdacraft.perplayerspawns;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap.Entry;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
-import net.minecraft.server.ChunkCoordIntPair;
-import net.minecraft.server.EntityPlayer;
-import net.minecraft.server.SectionPosition;
-import org.spigotmc.AsyncCatcher;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.util.math.ChunkPos;
+import net.minecraft.util.math.ChunkSectionPos;
+
+// import org.spigotmc.AsyncCatcher;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,39 +17,50 @@ import java.util.Set;
 /** @author Spottedleaf */
 public final class PlayerMobDistanceMap {
 
-    private static final PooledHashSets.PooledObjectLinkedOpenHashSet<EntityPlayer> EMPTY_SET = new PooledHashSets.PooledObjectLinkedOpenHashSet<>();
+    private static final PooledHashSets.PooledObjectLinkedOpenHashSet<ServerPlayerEntity> EMPTY_SET = new PooledHashSets.PooledObjectLinkedOpenHashSet<>();
 
-    private final Map<EntityPlayer, SectionPosition> players = new HashMap<>();
+    private final Map<ServerPlayerEntity, ChunkSectionPos> players = new HashMap<>();
     // we use linked for better iteration.
-    private final Long2ObjectOpenHashMap<PooledHashSets.PooledObjectLinkedOpenHashSet<EntityPlayer>> playerMap = new Long2ObjectOpenHashMap<>(32, 0.5f);
+    private final Long2ObjectOpenHashMap<PooledHashSets.PooledObjectLinkedOpenHashSet<ServerPlayerEntity>> playerMap = new Long2ObjectOpenHashMap<>(32, 0.5f);
     private int viewDistance;
 
-    private final PooledHashSets<EntityPlayer> pooledHashSets = new PooledHashSets<>();
+    private final PooledHashSets<ServerPlayerEntity> pooledHashSets = new PooledHashSets<>();
 
-    public PooledHashSets.PooledObjectLinkedOpenHashSet<EntityPlayer> getPlayersInRange(final ChunkCoordIntPair chunkPos) {
+    public PooledHashSets.PooledObjectLinkedOpenHashSet<ServerPlayerEntity> getPlayersInRange(final ChunkPos chunkPos) {
         return this.getPlayersInRange(chunkPos.x, chunkPos.z);
     }
 
-    public PooledHashSets.PooledObjectLinkedOpenHashSet<EntityPlayer> getPlayersInRange(final int chunkX, final int chunkZ) {
-        return this.playerMap.getOrDefault(ChunkCoordIntPair.pair(chunkX, chunkZ), EMPTY_SET);
+    public PooledHashSets.PooledObjectLinkedOpenHashSet<ServerPlayerEntity> getPlayersInRange(final int chunkX, final int chunkZ) {
+        return this.playerMap.getOrDefault(ChunkPos.toLong(chunkX, chunkZ), EMPTY_SET);
     }
 
-    public void update(final List<EntityPlayer> currentPlayers, final int newViewDistance) {
-        AsyncCatcher.catchOp("Distance map update");
-        final ObjectLinkedOpenHashSet<EntityPlayer> gone = new ObjectLinkedOpenHashSet<>(this.players.keySet());
+    public void update(final List<ServerPlayerEntity> currentPlayers, final int newViewDistance) {
+        // IDK what AsyncCatcher froom Paper does
+        // AsyncCatcher.catchOp("Distance map update");
+        final ObjectLinkedOpenHashSet<ServerPlayerEntity> gone = new ObjectLinkedOpenHashSet<>(this.players.keySet());
 
         final int oldViewDistance = this.viewDistance;
         this.viewDistance = newViewDistance;
 
-        for (final EntityPlayer player : currentPlayers) {
-            if (player.isSpectator() || !player.affectsSpawning) {
+        for (final ServerPlayerEntity player : currentPlayers) {
+          /*
+            TODO: affectsSpawning is custom Paper field
+              public boolean affectsSpawning = true;
+            on yarn class PlayerEntity
+          */
+          if (player.isSpectator() || !player.affectsSpawning) { 
                 continue; // will be left in 'gone' (or not added at all)
             }
 
             gone.remove(player);
 
-            final SectionPosition newPosition = player.getPlayerMapSection();
-            final SectionPosition oldPosition = this.players.put(player, newPosition);
+            /*
+              TODO: getPlayerMapSection is custom Paper method
+                public SectionPosition getPlayerMapSection() { return this.K(); } // Paper - OBFHELPER
+              on yarn class ServerPlayerEntity
+            */
+            final ChunkSectionPos newPosition = player.getPlayerMapSection();
+            final ChunkSectionPos oldPosition = this.players.put(player, newPosition);
 
             if (oldPosition == null) {
                 this.addNewPlayer(player, newPosition, newViewDistance);
@@ -57,8 +70,8 @@ public final class PlayerMobDistanceMap {
             //this.validatePlayer(player, newViewDistance); // debug only
         }
 
-        for (final EntityPlayer player : gone) {
-            final SectionPosition oldPosition = this.players.remove(player);
+        for (final ServerPlayerEntity player : gone) {
+            final ChunkSectionPos oldPosition = this.players.remove(player);
             if (oldPosition != null) {
                 this.removePlayer(player, oldPosition, oldViewDistance);
             }
@@ -66,19 +79,24 @@ public final class PlayerMobDistanceMap {
     }
 
     // expensive op, only for debug
-    private void validatePlayer(final EntityPlayer player, final int viewDistance) {
+    private void validatePlayer(final ServerPlayerEntity player, final int viewDistance) {
         int entiesGot = 0;
         int expectedEntries = (2 * viewDistance + 1);
         expectedEntries *= expectedEntries;
 
-        final SectionPosition currPosition = player.getPlayerMapSection();
+        /*
+          TODO: getPlayerMapSection is custom Paper method
+            public SectionPosition getPlayerMapSection() { return this.K(); } // Paper - OBFHELPER
+          on yarn class ServerPlayerEntity
+        */
+        final ChunkSectionPos currPosition = player.getPlayerMapSection();
 
         final int centerX = currPosition.getX();
         final int centerZ = currPosition.getZ();
 
-        for (final Long2ObjectLinkedOpenHashMap.Entry<PooledHashSets.PooledObjectLinkedOpenHashSet<EntityPlayer>> entry : this.playerMap.long2ObjectEntrySet()) {
+        for (final Entry<PooledHashSets.PooledObjectLinkedOpenHashSet<ServerPlayerEntity>> entry : this.playerMap.long2ObjectEntrySet()) {
             final long key = entry.getLongKey();
-            final PooledHashSets.PooledObjectLinkedOpenHashSet<EntityPlayer> map = entry.getValue();
+            final PooledHashSets.PooledObjectLinkedOpenHashSet<ServerPlayerEntity> map = entry.getValue();
 
             if (map.referenceCount == 0) {
                 throw new IllegalStateException("Invalid map");
@@ -87,8 +105,8 @@ public final class PlayerMobDistanceMap {
             if (map.set.contains(player)) {
                 ++entiesGot;
 
-                final int chunkX = ChunkCoordIntPair.getX(key);
-                final int chunkZ = ChunkCoordIntPair.getZ(key);
+                final int chunkX = ChunkPos.getPackedX(key);
+                final int chunkZ = ChunkPos.getPackedZ(key);
 
                 final int dist = Math.max(Math.abs(chunkX - centerX), Math.abs(chunkZ - centerZ));
 
@@ -103,8 +121,14 @@ public final class PlayerMobDistanceMap {
         }
     }
 
-    private void addPlayerTo(final EntityPlayer player, final int chunkX, final int chunkZ) {
-       this.playerMap.compute(ChunkCoordIntPair.pair(chunkX, chunkZ), (final Long key, final PooledHashSets.PooledObjectLinkedOpenHashSet<EntityPlayer> players) -> {
+    private void addPlayerTo(final ServerPlayerEntity player, final int chunkX, final int chunkZ) {
+       this.playerMap.compute(ChunkPos.toLong(chunkX, chunkZ), (final Long key, final PooledHashSets.PooledObjectLinkedOpenHashSet<ServerPlayerEntity> players) -> {
+         /*
+          TODO: cachedSingleMobDistanceMap is custom Paper field
+            public final com.destroystokyo.paper.util.PooledHashSets.PooledObjectLinkedOpenHashSet<EntityPlayer> cachedSingleMobDistanceMap;
+            this.cachedSingleMobDistanceMap = new com.destroystokyo.paper.util.PooledHashSets.PooledObjectLinkedOpenHashSet<>(this); // Paper
+          on yarn class ServerPlayerEntity
+          */
            if (players == null) {
                return player.cachedSingleMobDistanceMap;
            } else {
@@ -113,13 +137,13 @@ public final class PlayerMobDistanceMap {
         });
     }
 
-    private void removePlayerFrom(final EntityPlayer player, final int chunkX, final int chunkZ) {
-        this.playerMap.compute(ChunkCoordIntPair.pair(chunkX, chunkZ), (final Long keyInMap, final PooledHashSets.PooledObjectLinkedOpenHashSet<EntityPlayer> players) -> {
+    private void removePlayerFrom(final ServerPlayerEntity player, final int chunkX, final int chunkZ) {
+        this.playerMap.compute(ChunkPos.toLong(chunkX, chunkZ), (final Long keyInMap, final PooledHashSets.PooledObjectLinkedOpenHashSet<ServerPlayerEntity> players) -> {
             return PlayerMobDistanceMap.this.pooledHashSets.findMapWithout(players, player); // rets null instead of an empty map
         });
     }
 
-    private void updatePlayer(final EntityPlayer player, final SectionPosition oldPosition, final SectionPosition newPosition, final int oldViewDistance, final int newViewDistance) {
+    private void updatePlayer(final ServerPlayerEntity player, final ChunkSectionPos oldPosition, final ChunkSectionPos newPosition, final int oldViewDistance, final int newViewDistance) {
         final int toX = newPosition.getX();
         final int toZ = newPosition.getZ();
         final int fromX = oldPosition.getX();
@@ -229,7 +253,7 @@ public final class PlayerMobDistanceMap {
         }
     }
 
-    private void removePlayer(final EntityPlayer player, final SectionPosition position, final int viewDistance) {
+    private void removePlayer(final ServerPlayerEntity player, final ChunkSectionPos position, final int viewDistance) {
         final int x = position.getX();
         final int z = position.getZ();
 
@@ -240,7 +264,7 @@ public final class PlayerMobDistanceMap {
         }
     }
 
-    private void addNewPlayer(final EntityPlayer player, final SectionPosition position, final int viewDistance) {
+    private void addNewPlayer(final ServerPlayerEntity player, final ChunkSectionPos position, final int viewDistance) {
         final int x = position.getX();
         final int z = position.getZ();
 
