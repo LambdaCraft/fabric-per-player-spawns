@@ -7,14 +7,15 @@
   "description": "per-player-spawns from Paper implemented as a Fabric mod",
   "authors": [
     "unsupervised@tutanota.com",
-    "halfof2"
+    "halfof2 <devan@cleverpath.com>",
+    "kickash32 <kickash32@gmail.com>"
   ],
   "contact": {
     "homepage": "https://lambdacraft.dev",
     "sources": "https://github.com/Lambdacraft/fabric-per-player-spawns"
   },
 
-  "license": "CC0-1.0",
+  "license": "GPL",
   "icon": "assets/perplayerspawns/icon.png",
 
   "environment": "*",
