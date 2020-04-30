@@ -1,9 +1,15 @@
 {
   "required": true,
   "minVersion": "0.8",
-  "package": "dev.lambdacraft.example.mixin",
+  "package": "dev.lambdacraft.perplayerspawns.mixin",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
+    "MinecraftServerMixin",
+    "PlayerEntityMixin",
+    "ServerChunkManagerMixin",
+    "ServerWorldMixin",
+    "SpawnHelperMixin",
+    "TACSMixin"
   ],
   "client": [
   ],

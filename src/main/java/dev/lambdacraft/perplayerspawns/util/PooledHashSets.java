@@ -1,4 +1,4 @@
-package dev.lambdacraft.perplayerspawns;
+package dev.lambdacraft.perplayerspawns.util;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
