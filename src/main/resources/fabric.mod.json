@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "id": "perplayerspawns",
+  "version": "${version}",
+
+  "name": "Example Mod",
+  "description": "per-player-spawns from Paper implemented as a Fabric mod",
+  "authors": [
+    "unsupervised@tutanota.com",
+    "halfof2"
+  ],
+  "contact": {
+    "homepage": "https://lambdacraft.dev",
+    "sources": "https://github.com/Lambdacraft/fabric-per-player-spawns"
+  },
+
+  "license": "CC0-1.0",
+  "icon": "assets/perplayerspawns/icon.png",
+
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "dev.lambdactaft.perplayerspawns.Main"
+    ]
+  },
+  "mixins": [
+    "perplayerspawns.mixins.json"
+  ],
+
+  "depends": {
+    "fabricloader": ">=0.7.4",
+    "fabric": "*",
+    "minecraft": "1.15.x"
+  },
+  "suggests": {
+    "flamingo": "*"
+  }
+}
