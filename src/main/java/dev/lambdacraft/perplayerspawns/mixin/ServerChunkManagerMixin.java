@@ -63,7 +63,6 @@ public class ServerChunkManagerMixin {
 		difference = (minDiff == Integer.MAX_VALUE) ? 0 : minDiff;
 
 		if (difference > 0) {
-			System.out.println("thonk");
 			SpawnHelper.spawnEntitiesInChunk(category, this.world, holder.getEntityTickingFuture().getNow(ChunkHolder.UNLOADED_WORLD_CHUNK).left().get(), pos);
 			int spawnCount = SpawnHelperAccess.SPAWNS.get();
 			((ArrayInt2IntMap)map).set(category.ordinal(), map.getInt(category.ordinal()) + spawnCount);
