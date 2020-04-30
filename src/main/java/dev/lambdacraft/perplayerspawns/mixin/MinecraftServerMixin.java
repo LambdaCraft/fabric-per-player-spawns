@@ -4,7 +4,6 @@ import com.mojang.authlib.GameProfileRepository;
 import com.mojang.authlib.minecraft.MinecraftSessionService;
 import com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService;
 import com.mojang.datafixers.DataFixer;
-import com.sun.org.apache.regexp.internal.RE;
 import dev.lambdacraft.perplayerspawns.Main;
 import dev.lambdacraft.perplayerspawns.access.MinecraftServerAccess;
 import net.minecraft.server.MinecraftServer;
