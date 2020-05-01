@@ -7,7 +7,7 @@ import net.minecraft.entity.player.PlayerEntity;
 
 public interface TACSAccess {
 	void updatePlayerMobTypeMap(Entity entity);
-	PlayerMobDistanceMap map();
+	PlayerMobDistanceMap playerMobDistanceMap();
 	int renderDistance();
 	int getMobCountNear(PlayerEntity entity, EntityCategory category);
 }

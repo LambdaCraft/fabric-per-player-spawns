@@ -24,8 +24,8 @@ public abstract class ServerWorldMixin implements ServerWorldAccess {
 	public abstract ServerChunkManager getChunkManager();
 
 	@Override
-	public Object2IntMap<Integer> countMobs(boolean update) {
-		ArrayInt2IntMap mobs = new ArrayInt2IntMap(new int[Main.ENTITIES]);
+	public Object2IntMap<Integer> countMobs() {
+		ArrayInt2IntMap mobs = new ArrayInt2IntMap(new int[Main.ENTITIES_CATEGORY_LENGTH]);
 		ObjectIterator<Entity> var2 = this.entitiesById.values().iterator();
 
 		while (true) {
@@ -46,9 +46,8 @@ public abstract class ServerWorldMixin implements ServerWorldAccess {
 
 			EntityCategory category = entity.getType().getCategory();
 			if (category != EntityCategory.MISC && this.getChunkManager().method_20727(entity)) {
-				if (update) {
-					((TACSAccess)this.getChunkManager().threadedAnvilChunkStorage).updatePlayerMobTypeMap(entity);
-				}
+				// Update player counts
+				((TACSAccess)this.getChunkManager().threadedAnvilChunkStorage).updatePlayerMobTypeMap(entity);
 				mobs.set(category.ordinal(), mobs.getInt(category.ordinal()) + 1);
 			}
 		}

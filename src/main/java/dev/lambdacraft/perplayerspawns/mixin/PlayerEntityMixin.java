@@ -14,11 +14,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(PlayerEntity.class)
 public class PlayerEntityMixin implements PlayerEntityAccess {
 	private int[] mobCounts;
-	private PooledHashSets.PooledObjectLinkedOpenHashSet<PlayerEntity> pooled;
+	private PooledHashSets.PooledObjectLinkedOpenHashSet<PlayerEntity> cachedSingleMobDistanceMap;
 	@Inject(method = "<init>", at = @At("RETURN"))
-	private void pooled(World world, GameProfile profile, CallbackInfo ci) {
-		this.mobCounts = new int[Main.ENTITIES];
-		this.pooled = new PooledHashSets.PooledObjectLinkedOpenHashSet<>((PlayerEntity)(Object) this);
+	private void cachedSingleMobDistanceMap(World world, GameProfile profile, CallbackInfo ci) {
+		this.mobCounts = new int[Main.ENTITIES_CATEGORY_LENGTH];
+		this.cachedSingleMobDistanceMap = new PooledHashSets.PooledObjectLinkedOpenHashSet<>((PlayerEntity)(Object) this);
 	}
 
 	@Override
@@ -28,6 +28,6 @@ public class PlayerEntityMixin implements PlayerEntityAccess {
 
 	@Override
 	public final PooledHashSets.PooledObjectLinkedOpenHashSet<PlayerEntity> getDistanceMap() {
-		return this.pooled;
+		return this.cachedSingleMobDistanceMap;
 	}
 }

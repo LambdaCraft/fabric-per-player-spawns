@@ -5,7 +5,7 @@ import net.minecraft.entity.EntityCategory;
 import net.minecraft.server.MinecraftServer;
 
 public class Main implements ModInitializer {
-	public static final int ENTITIES = EntityCategory.values().length;
+	public static final int ENTITIES_CATEGORY_LENGTH = EntityCategory.values().length;
 	// non final cus clients, even though I'm pretty sure none of this works with clients anyways
 	public static MinecraftServer current;
 

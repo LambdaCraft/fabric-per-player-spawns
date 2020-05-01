@@ -14,14 +14,14 @@ import org.spongepowered.asm.mixin.Shadow;
 @Mixin (ThreadedAnvilChunkStorage.class)
 public abstract class TACSMixin implements TACSAccess {
 	@Shadow private int watchDistance;
-	private final PlayerMobDistanceMap map = new PlayerMobDistanceMap();
+	private final PlayerMobDistanceMap playerMobDistanceMap = new PlayerMobDistanceMap();
 
 	@Override
 	public void updatePlayerMobTypeMap(Entity entity) {
 		int chunkX = (int) Math.floor(entity.getX()) >> 4;
 		int chunkZ = (int) Math.floor(entity.getY()) >> 4;
 		int index = entity.getType().getCategory().ordinal();
-		for (PlayerEntity player : this.map.getPlayersInRange(chunkX, chunkZ)) {
+		for (PlayerEntity player : this.playerMobDistanceMap.getPlayersInRange(chunkX, chunkZ)) {
 			++((PlayerEntityAccess)player).getMobCounts()[index];
 		}
 	}
@@ -32,8 +32,8 @@ public abstract class TACSMixin implements TACSAccess {
 	}
 
 	@Override
-	public PlayerMobDistanceMap map() {
-		return this.map;
+	public PlayerMobDistanceMap playerMobDistanceMap() {
+		return this.playerMobDistanceMap;
 	}
 
 	@Override

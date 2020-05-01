@@ -34,19 +34,16 @@ public class ServerChunkManagerMixin {
 	           at = @At (value = "INVOKE",
 	                     target = "Lnet/minecraft/server/world/ServerWorld;getMobCountsByCategory()Lit/unimi/dsi/fastutil/objects/Object2IntMap;"))
 	private Object2IntMap getMobCounts(ServerWorld world) {
-		Object2IntMap counts;
-		if (((TACSAccess) this.threadedAnvilChunkStorage).map() != null) {
-			// update distance map
-			((TACSAccess) this.threadedAnvilChunkStorage).map().update(this.world.getPlayers(), ((TACSAccess) this.threadedAnvilChunkStorage).renderDistance());
-			// re-set mob counts
-			for (PlayerEntity player : this.world.getPlayers()) {
-				Arrays.fill(((PlayerEntityAccess) player).getMobCounts(), 0);
-			}
-			counts = ((ServerWorldAccess) this.world).countMobs(true);
-		} else {
-			counts = ((ServerWorldAccess) this.world).countMobs(false);
+		// update distance map
+		((TACSAccess) this.threadedAnvilChunkStorage).playerMobDistanceMap().update(
+			this.world.getPlayers(),
+			((TACSAccess) this.threadedAnvilChunkStorage).renderDistance()
+		);
+		// re-set mob counts
+		for (PlayerEntity player : this.world.getPlayers()) {
+			Arrays.fill(((PlayerEntityAccess) player).getMobCounts(), 0);
 		}
-		return counts;
+		return ((ServerWorldAccess) this.world).countMobs();
 	}
 
 	//(JZ[Lnet/minecraft/entity/EntityCategory;ZILit/unimi/dsi/fastutil/objects/Object2IntMap;Lnet/minecraft/util/math/BlockPos;ILnet/minecraft/server/world/ChunkHolder;)V
@@ -57,13 +54,18 @@ public class ServerChunkManagerMixin {
 		EntityCategory category = (EntityCategory) obj;
 		int difference;
 		int minDiff = Integer.MAX_VALUE;
-		for (PlayerEntity entityplayer : ((TACSAccess)this.threadedAnvilChunkStorage).map().getPlayersInRange(holder.getPos())) {
+		for (PlayerEntity entityplayer : ((TACSAccess)this.threadedAnvilChunkStorage).playerMobDistanceMap().getPlayersInRange(holder.getPos())) {
 			minDiff = Math.min(category.getSpawnCap() - ((TACSAccess)this.threadedAnvilChunkStorage).getMobCountNear(entityplayer, category), minDiff);
 		}
 		difference = (minDiff == Integer.MAX_VALUE) ? 0 : minDiff;
 
 		if (difference > 0) {
-			SpawnHelper.spawnEntitiesInChunk(category, this.world, holder.getEntityTickingFuture().getNow(ChunkHolder.UNLOADED_WORLD_CHUNK).left().get(), pos);
+			SpawnHelper.spawnEntitiesInChunk(
+				category,
+				this.world,
+				holder.getEntityTickingFuture().getNow(ChunkHolder.UNLOADED_WORLD_CHUNK).left().get(),
+				pos
+			);
 			int spawnCount = SpawnHelperAccess.SPAWNS.get();
 			((ArrayInt2IntMap)map).set(category.ordinal(), map.getInt(category.ordinal()) + spawnCount);
 		}
