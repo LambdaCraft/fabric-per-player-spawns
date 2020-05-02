@@ -5,6 +5,7 @@ import dev.lambdacraft.perplayerspawns.access.ServerWorldAccess;
 import dev.lambdacraft.perplayerspawns.access.SpawnHelperAccess;
 import dev.lambdacraft.perplayerspawns.access.TACSAccess;
 import dev.lambdacraft.perplayerspawns.util.ArrayInt2IntMap;
+import dev.lambdacraft.perplayerspawns.util.PlayerMobDistanceMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import net.minecraft.entity.EntityCategory;
 import net.minecraft.entity.player.PlayerEntity;
@@ -50,16 +51,23 @@ public class ServerChunkManagerMixin {
 	@Redirect (method = "method_20801",
 	           at = @At (value = "INVOKE",
 	                     target = "Lit/unimi/dsi/fastutil/objects/Object2IntMap;getInt(Ljava/lang/Object;)I"))
-	private int doThing(Object2IntMap<Integer> map, Object obj, long time, boolean b, EntityCategory[] categories, boolean b2, int i, Object2IntMap map2, BlockPos pos, int j, ChunkHolder holder) {
+	private int doThing(
+			Object2IntMap<Integer> map, Object obj, long time, boolean b, EntityCategory[] categories, boolean b2, int i,
+			Object2IntMap map2, BlockPos pos, int j, ChunkHolder holder
+	) {
 		EntityCategory category = (EntityCategory) obj;
 		int difference;
 		int minDiff = Integer.MAX_VALUE;
-		for (PlayerEntity entityplayer : ((TACSAccess)this.threadedAnvilChunkStorage).playerMobDistanceMap().getPlayersInRange(holder.getPos())) {
-			minDiff = Math.min(category.getSpawnCap() - ((TACSAccess)this.threadedAnvilChunkStorage).getMobCountNear(entityplayer, category), minDiff);
+		TACSAccess tacs = (TACSAccess)this.threadedAnvilChunkStorage;
+		PlayerMobDistanceMap mobDistanceMap = tacs.playerMobDistanceMap();
+		for (PlayerEntity entityPlayer : mobDistanceMap.getPlayersInRange(holder.getPos())) {
+			minDiff = Math.min(category.getSpawnCap() - tacs.getMobCountNear(entityPlayer, category), minDiff);
 		}
 		difference = (minDiff == Integer.MAX_VALUE) ? 0 : minDiff;
 
 		if (difference > 0) {
+			SpawnHelperAccess.maxSpawns.set(difference); // to pass diff to spawnEntitiesInChunk
+			SpawnHelperAccess.trackEntity.set(tacs::updatePlayerMobTypeMap);
 			SpawnHelper.spawnEntitiesInChunk(
 				category,
 				this.world,
