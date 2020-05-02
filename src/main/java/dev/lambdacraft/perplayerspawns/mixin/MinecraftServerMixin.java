@@ -24,7 +24,13 @@ public class MinecraftServerMixin implements MinecraftServerAccess {
 	@Shadow @Final protected Thread serverThread;
 
 	@Inject(method = "<init>", at = @At("RETURN"))
-	private void onInit(File gameDir, Proxy proxy, DataFixer dataFixer, CommandManager commandManager, YggdrasilAuthenticationService authService, MinecraftSessionService sessionService, GameProfileRepository gameProfileRepository, UserCache userCache, WorldGenerationProgressListenerFactory worldGenerationProgressListenerFactory, String levelName, CallbackInfo ci) {
+	private void onInit(
+			File gameDir, Proxy proxy, DataFixer dataFixer, CommandManager commandManager,
+			YggdrasilAuthenticationService authService, MinecraftSessionService sessionService,
+			GameProfileRepository gameProfileRepository, UserCache userCache,
+			WorldGenerationProgressListenerFactory worldGenerationProgressListenerFactory,
+			String levelName, CallbackInfo ci
+	) {
 		Main.current = (MinecraftServer) (Object) this;
 	}
 

@@ -9,5 +9,4 @@ public interface TACSAccess {
 	void updatePlayerMobTypeMap(Entity entity);
 	PlayerMobDistanceMap playerMobDistanceMap();
 	int renderDistance();
-	int getMobCountNear(PlayerEntity entity, EntityCategory category);
 }

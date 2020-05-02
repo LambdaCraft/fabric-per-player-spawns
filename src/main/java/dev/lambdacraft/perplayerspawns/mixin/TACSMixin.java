@@ -4,7 +4,6 @@ import dev.lambdacraft.perplayerspawns.access.PlayerEntityAccess;
 import dev.lambdacraft.perplayerspawns.access.TACSAccess;
 import dev.lambdacraft.perplayerspawns.util.PlayerMobDistanceMap;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityCategory;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.world.ThreadedAnvilChunkStorage;
 import org.spongepowered.asm.mixin.Mixin;
@@ -19,16 +18,14 @@ public abstract class TACSMixin implements TACSAccess {
 	@Override
 	public void updatePlayerMobTypeMap(Entity entity) {
 		int chunkX = (int) Math.floor(entity.getX()) >> 4;
-		int chunkZ = (int) Math.floor(entity.getY()) >> 4;
+		int chunkZ = (int) Math.floor(entity.getZ()) >> 4;
 		int index = entity.getType().getCategory().ordinal();
-		for (PlayerEntity player : this.playerMobDistanceMap.getPlayersInRange(chunkX, chunkZ)) {
-			++((PlayerEntityAccess)player).getMobCounts()[index];
-		}
-	}
 
-	@Override
-	public int getMobCountNear(PlayerEntity entity, EntityCategory category) {
-		return ((PlayerEntityAccess)entity).getMobCounts()[category.ordinal()];
+		// Find players in range of entity
+		for (PlayerEntity player : this.playerMobDistanceMap.getPlayersInRange(chunkX, chunkZ)) {
+			// Increment player's sighting of entity
+			((PlayerEntityAccess)player).getMobCounts()[index] += 1;
+		}
 	}
 
 	@Override

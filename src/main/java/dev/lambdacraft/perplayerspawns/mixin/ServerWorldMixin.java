@@ -24,33 +24,19 @@ public abstract class ServerWorldMixin implements ServerWorldAccess {
 	public abstract ServerChunkManager getChunkManager();
 
 	@Override
-	public Object2IntMap<Integer> countMobs() {
-		ArrayInt2IntMap mobs = new ArrayInt2IntMap(new int[Main.ENTITIES_CATEGORY_LENGTH]);
-		ObjectIterator<Entity> var2 = this.entitiesById.values().iterator();
-
-		while (true) {
-			Entity entity;
-			MobEntity mobEntity;
-			do {
-				if (!var2.hasNext()) {
-					return mobs;
-				}
-
-				entity = var2.next();
-				if (!(entity instanceof MobEntity)) {
-					break;
-				}
-
-				mobEntity = (MobEntity) entity;
-			} while (mobEntity.isPersistent() || mobEntity.cannotDespawn());
+	public void updatePlayerMobTypeMapFromWorld() {
+		for (Entity entity : this.entitiesById.values()) {
+			boolean isMobEntity = entity instanceof MobEntity;
+			if (isMobEntity) {
+				MobEntity mobEntity = (MobEntity) entity;
+				if (mobEntity.isPersistent() && mobEntity.cannotDespawn()) continue;
+			}
 
 			EntityCategory category = entity.getType().getCategory();
 			if (category != EntityCategory.MISC && this.getChunkManager().method_20727(entity)) {
 				// Update player counts
-				((TACSAccess)this.getChunkManager().threadedAnvilChunkStorage).updatePlayerMobTypeMap(entity);
-				mobs.set(category.ordinal(), mobs.getInt(category.ordinal()) + 1);
+				((TACSAccess) this.getChunkManager().threadedAnvilChunkStorage).updatePlayerMobTypeMap(entity);
 			}
 		}
-
 	}
 }

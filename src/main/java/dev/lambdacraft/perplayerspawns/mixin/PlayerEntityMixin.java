@@ -4,6 +4,7 @@ import com.mojang.authlib.GameProfile;
 import dev.lambdacraft.perplayerspawns.Main;
 import dev.lambdacraft.perplayerspawns.util.PooledHashSets;
 import dev.lambdacraft.perplayerspawns.access.PlayerEntityAccess;
+import net.minecraft.entity.EntityCategory;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
@@ -24,6 +25,11 @@ public class PlayerEntityMixin implements PlayerEntityAccess {
 	@Override
 	public final int[] getMobCounts() {
 		return this.mobCounts;
+	}
+
+	@Override
+	public final int getMobCountForEntityCategory(EntityCategory category) {
+		return this.mobCounts[category.ordinal()];
 	}
 
 	@Override
