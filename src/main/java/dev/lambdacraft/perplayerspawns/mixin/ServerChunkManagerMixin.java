@@ -54,9 +54,9 @@ public class ServerChunkManagerMixin {
 			Arrays.fill(((PlayerEntityAccess) player).getMobCounts(), 0);
 		}
 		((ServerWorldAccess)this.world).updatePlayerMobTypeMapFromWorld();
-		for (PlayerEntity player : this.world.getPlayers()) {
-			System.out.println(player.getName().asString() + ": " + Arrays.toString(((PlayerEntityAccess) player).getMobCounts()));
-		}
+//		for (PlayerEntity player : this.world.getPlayers()) {
+//			System.out.println(player.getName().asString() + ": " + Arrays.toString(((PlayerEntityAccess) player).getMobCounts()));
+//		}
 	}
 
 	@Redirect (method = "method_20801",
@@ -77,7 +77,6 @@ public class ServerChunkManagerMixin {
 		for (PlayerEntity entityPlayer : mobDistanceMap.getPlayersInRange(chunk.getPos())) {
 			int mobCountNearPlayer = ((PlayerEntityAccess)entityPlayer).getMobCountForEntityCategory(category);
 			minDiff = Math.min(category.getSpawnCap() -  mobCountNearPlayer, minDiff);
-//			System.out.println(category.getName() + " near player " + entityPlayer.getName().asString() + " = " + mobCountNearPlayer);
 		}
 
 		int difference = (minDiff == Integer.MAX_VALUE) ? 0 : minDiff;
